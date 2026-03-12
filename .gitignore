@@ -1,0 +1,31 @@
+# Virtual environment
+env/
+
+# Cloned repos
+repo/
+
+# Symlinks to local paths
+gnina
+
+# Generated outputs
+results/
+claude_outputs/
+reports/
+.pipeline/
+
+# Test outputs
+test_output.csv
+test_output_report.txt
+
+# Environment info
+env_info.txt
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/

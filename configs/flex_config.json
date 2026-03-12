@@ -1,0 +1,38 @@
+{
+  "_description": "Configuration for flexible receptor docking",
+  "_source": "Extracted from examples/use_case_5_flexible_docking.py",
+
+  "flexibility": {
+    "flexdist": 3.5,
+    "flexres": null,
+    "flex_residues": [],
+    "flexdist_ligand": null
+  },
+
+  "docking": {
+    "num_modes": 9,
+    "exhaustiveness": 8,
+    "autobox_add": 4,
+    "compare_rigid": true
+  },
+
+  "receptor": {
+    "makeflex_script": "examples/makeflex.py",
+    "save_flexible_receptor": true,
+    "combine_structures": true
+  },
+
+  "output": {
+    "format": "sdf",
+    "flexible_receptor_pdb": true,
+    "combined_structure_pdb": true,
+    "comparison_report": true
+  },
+
+  "gnina": {
+    "executable": "gnina",
+    "timeout": 2400,
+    "gpu": true,
+    "verbose": false
+  }
+}

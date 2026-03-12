@@ -1,0 +1,23 @@
+{
+  "_description": "Configuration for protein-ligand scoring with gnina",
+  "_source": "Extracted from examples/use_case_1_basic_scoring.py",
+
+  "scoring": {
+    "functions": ["default", "vinardo"],
+    "cnn_models": ["default"],
+    "score_only": true,
+    "batch_size": 10
+  },
+
+  "output": {
+    "format": "csv",
+    "include_raw_output": false,
+    "float_precision": 3
+  },
+
+  "gnina": {
+    "executable": "gnina",
+    "timeout": 300,
+    "verbose": false
+  }
+}

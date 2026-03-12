@@ -1,0 +1,43 @@
+{
+  "_description": "Configuration for molecular descriptor analysis",
+  "_source": "Extracted from examples/use_case_6_python_api.py",
+
+  "analysis": {
+    "mode": "analyze",
+    "include_scoring": true,
+    "include_descriptors": true,
+    "drug_likeness": true
+  },
+
+  "descriptors": {
+    "molecular_weight": true,
+    "logp": true,
+    "hbd_hba": true,
+    "rotatable_bonds": true,
+    "surface_area": true,
+    "cyclic_peptide_specific": true
+  },
+
+  "drug_likeness": {
+    "lipinski_rules": true,
+    "veber_rules": true,
+    "custom_thresholds": {
+      "mw_max": 1000,
+      "logp_max": 5,
+      "hbd_max": 10,
+      "hba_max": 10
+    }
+  },
+
+  "output": {
+    "format": "csv",
+    "include_report": true,
+    "detailed_analysis": true,
+    "summary_statistics": true
+  },
+
+  "dependencies": {
+    "require_rdkit": true,
+    "fallback_without_pygnina": true
+  }
+}

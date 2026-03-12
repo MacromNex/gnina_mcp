@@ -1,0 +1,38 @@
+{
+  "_description": "Configuration for molecular docking with gnina",
+  "_source": "Extracted from examples/use_case_2_standard_docking.py",
+
+  "docking": {
+    "num_modes": 9,
+    "exhaustiveness": 8,
+    "energy_range": 3,
+    "seed": 0,
+    "autobox_add": 4,
+    "spacing": 0.375
+  },
+
+  "scoring": {
+    "cnn_scoring": "all",
+    "cnn_model": "default",
+    "empirical_only": false
+  },
+
+  "binding_site": {
+    "autobox_ligand": null,
+    "center": null,
+    "size": [20, 20, 20]
+  },
+
+  "output": {
+    "format": "sdf",
+    "include_hydrogens": true,
+    "include_scores": true
+  },
+
+  "gnina": {
+    "executable": "gnina",
+    "timeout": 1800,
+    "gpu": true,
+    "verbose": false
+  }
+}

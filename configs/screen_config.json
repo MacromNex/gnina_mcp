@@ -1,0 +1,38 @@
+{
+  "_description": "Configuration for virtual screening with gnina",
+  "_source": "Extracted from examples/use_case_3_virtual_screening.py",
+
+  "screening": {
+    "workers": 2,
+    "top_n": 10,
+    "batch_size": 100,
+    "continue_on_error": true
+  },
+
+  "docking": {
+    "num_modes": 3,
+    "exhaustiveness": 4,
+    "energy_range": 2,
+    "autobox_add": 4
+  },
+
+  "filtering": {
+    "max_affinity": 0,
+    "min_cnn_score": -1000,
+    "remove_duplicates": true
+  },
+
+  "output": {
+    "format": "csv",
+    "save_poses": false,
+    "include_failed": true,
+    "detailed_report": true
+  },
+
+  "gnina": {
+    "executable": "gnina",
+    "timeout": 600,
+    "gpu": true,
+    "verbose": false
+  }
+}

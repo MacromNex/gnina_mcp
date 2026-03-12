@@ -1,0 +1,37 @@
+{
+  "_description": "Configuration for CNN model comparison",
+  "_source": "Extracted from examples/use_case_4_cnn_model_comparison.py",
+
+  "comparison": {
+    "models": ["default", "fast", "dense"],
+    "modes": ["score", "dock"],
+    "iterations": 3,
+    "include_timing": true
+  },
+
+  "benchmarking": {
+    "warmup_runs": 1,
+    "statistical_analysis": true,
+    "correlation_analysis": true
+  },
+
+  "visualization": {
+    "create_plots": true,
+    "plot_format": "png",
+    "heatmap": true,
+    "scatter_plots": true
+  },
+
+  "output": {
+    "format": "csv",
+    "detailed_results": true,
+    "summary_table": true
+  },
+
+  "gnina": {
+    "executable": "gnina",
+    "timeout": 900,
+    "gpu": true,
+    "verbose": false
+  }
+}
