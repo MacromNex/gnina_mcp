@@ -12,6 +12,7 @@ results/
 claude_outputs/
 reports/
 .pipeline/
+/jobs/
 
 # Test outputs
 test_output.csv

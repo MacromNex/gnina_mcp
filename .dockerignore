@@ -1,0 +1,15 @@
+env/
+repo/
+.git/
+.pipeline/
+claude_outputs/
+reports/
+results/
+jobs/
+__pycache__/
+*.pyc
+test_output.*
+env_info.txt
+gnina
+.gitignore
+.dockerignore

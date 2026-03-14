@@ -1,0 +1,4 @@
+fastmcp>=3.0
+loguru>=0.6
+pandas>=1.5
+numpy>=1.23

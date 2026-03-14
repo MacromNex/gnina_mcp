@@ -17,6 +17,7 @@ Example:
 # Minimal Imports (only essential packages)
 # ==============================================================================
 import argparse
+import shutil
 import subprocess
 import sys
 import os
@@ -31,6 +32,40 @@ import pandas as pd
 # ==============================================================================
 # Configuration (extracted from use case)
 # ==============================================================================
+def _resolve_gnina_executable():
+    """Find gnina executable, falling back to env/bin or mock_gnina.py."""
+    if shutil.which('gnina'):
+        return 'gnina'
+    # Check the conda env bundled with the project
+    env_path = Path(__file__).resolve().parent.parent / 'env' / 'bin' / 'gnina'
+    if env_path.exists():
+        return str(env_path)
+    # Fall back to mock_gnina.py for testing
+    mock_path = Path(__file__).resolve().parent.parent / 'mock_gnina.py'
+    if mock_path.exists():
+        return str(mock_path)
+    return 'gnina'
+
+def _gnina_subprocess_env():
+    """Get environment dict with LD_LIBRARY_PATH set for gnina."""
+    env = os.environ.copy()
+    env_lib = Path(__file__).resolve().parent.parent / 'env' / 'lib'
+    if env_lib.exists():
+        ld_path = env.get('LD_LIBRARY_PATH', '')
+        if str(env_lib) not in ld_path:
+            env['LD_LIBRARY_PATH'] = f"{env_lib}:{ld_path}" if ld_path else str(env_lib)
+    return env
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Deep merge override into base, returning a new dict."""
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
 DEFAULT_CONFIG = {
     "scoring": {
         "functions": ["default", "vinardo"],
@@ -44,7 +79,7 @@ DEFAULT_CONFIG = {
         "float_precision": 3
     },
     "gnina": {
-        "executable": "gnina",
+        "executable": _resolve_gnina_executable(),
         "timeout": 300,
         "verbose": False
     }
@@ -129,7 +164,7 @@ def run_gnina_command(receptor_path: str, ligand_path: str, scoring_function: st
 
     try:
         # Run gnina
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=timeout)
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=timeout, env=_gnina_subprocess_env())
         output = result.stdout + result.stderr
 
         # Parse scores
@@ -193,7 +228,9 @@ def run_protein_ligand_scoring(
     # Setup
     receptor_file = Path(receptor_file)
     ligand_file = Path(ligand_file)
-    config = {**DEFAULT_CONFIG, **(config or {}), **kwargs}
+    config = _deep_merge(DEFAULT_CONFIG, config or {})
+    if kwargs:
+        config = _deep_merge(config, kwargs)
 
     # Validate inputs
     validate_input_files(receptor_file, ligand_file)

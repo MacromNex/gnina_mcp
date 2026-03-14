@@ -32,6 +32,16 @@ except ImportError:
     RDKIT_AVAILABLE = False
     print("Warning: RDKit not available. Limited functionality.")
 
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Deep merge override into base, returning a new dict."""
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
 DEFAULT_CONFIG = {
     "analysis": {
         "mode": "analyze",
@@ -180,7 +190,9 @@ def run_molecular_analysis(
     """
     # Setup
     ligand_file = Path(ligand_file)
-    config = {**DEFAULT_CONFIG, **(config or {}), **kwargs}
+    config = _deep_merge(DEFAULT_CONFIG, config or {})
+    if kwargs:
+        config = _deep_merge(config, kwargs)
 
     if not RDKIT_AVAILABLE:
         raise RuntimeError("RDKit is required for molecular analysis")

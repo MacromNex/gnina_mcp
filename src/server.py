@@ -16,6 +16,9 @@ SCRIPT_DIR = paths["script_dir"]
 MCP_ROOT = paths["mcp_root"]
 SCRIPTS_DIR = paths["scripts_dir"]
 
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
 from jobs.manager import job_manager
 from loguru import logger
 
@@ -123,7 +126,7 @@ def cleanup_old_jobs(older_than_days: int = 7) -> dict:
 def score_protein_ligand(
     receptor_file: str,
     ligand_file: str,
-    scoring_function: str = "default",
+    scoring_functions: Optional[List[str]] = None,
     cnn_models: Optional[List[str]] = None,
     output_file: Optional[str] = None
 ) -> dict:
@@ -135,7 +138,7 @@ def score_protein_ligand(
     Args:
         receptor_file: Path to receptor protein structure (PDB/PDBQT)
         ligand_file: Path to ligand structure (SDF/PDB/PDBQT)
-        scoring_function: Gnina scoring function to use (default: "default")
+        scoring_functions: List of scoring functions (default: ["default", "vinardo"])
         cnn_models: List of CNN models to use for scoring
         output_file: Optional path to save results CSV
 
@@ -143,16 +146,19 @@ def score_protein_ligand(
         Dictionary with scoring results and statistics
     """
     try:
-        # Import at runtime to avoid circular imports
-        sys.path.append(str(SCRIPTS_DIR))
         from score_protein_ligand import run_protein_ligand_scoring
+
+        config = {}
+        if scoring_functions:
+            config['scoring'] = {'functions': scoring_functions}
+        if cnn_models:
+            config.setdefault('scoring', {})['cnn_models'] = cnn_models
 
         result = run_protein_ligand_scoring(
             receptor_file=receptor_file,
             ligand_file=ligand_file,
-            scoring_function=scoring_function,
-            cnn_models=cnn_models,
-            output_file=output_file
+            output_file=output_file,
+            config=config if config else None
         )
         return {"status": "success", **result}
     except FileNotFoundError as e:
@@ -166,7 +172,6 @@ def score_protein_ligand(
 @mcp.tool()
 def analyze_molecules(
     ligand_file: str,
-    descriptors: Optional[List[str]] = None,
     output_file: Optional[str] = None
 ) -> dict:
     """
@@ -176,22 +181,16 @@ def analyze_molecules(
 
     Args:
         ligand_file: Path to ligand structure file (SDF/MOL)
-        descriptors: List of descriptors to calculate (default: all available)
-                    Options: molecular_weight, logp, tpsa, hbd, hba, rotatable_bonds,
-                            aromatic_rings, drug_likeness_score
         output_file: Optional path to save analysis results CSV
 
     Returns:
         Dictionary with molecular descriptors and drug-likeness analysis
     """
     try:
-        # Import at runtime
-        sys.path.append(str(SCRIPTS_DIR))
         from molecular_analysis import run_molecular_analysis
 
         result = run_molecular_analysis(
             ligand_file=ligand_file,
-            descriptors=descriptors,
             output_file=output_file
         )
         return {"status": "success", **result}

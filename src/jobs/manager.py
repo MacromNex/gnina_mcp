@@ -82,7 +82,9 @@ class JobManager:
 
             try:
                 # Build command
-                cmd = ["python", script_path]
+                from utils import resolve_python_executable
+                python_exec = resolve_python_executable()
+                cmd = [python_exec, script_path]
                 for key, value in args.items():
                     if value is not None and key != "output_dir":
                         if isinstance(value, bool):
@@ -96,15 +98,16 @@ class JobManager:
                 cmd.extend(["--output", str(output_file)])
 
                 # Run script in the correct environment
+                from utils import gnina_subprocess_env
                 log_file = job_dir / "job.log"
                 with open(log_file, 'w') as log:
-                    # Use mamba run to ensure correct environment
-                    full_cmd = ["mamba", "run", "-p", str(Path.cwd() / "env")] + cmd
+                    full_cmd = cmd
                     process = subprocess.Popen(
                         full_cmd,
                         stdout=log,
                         stderr=subprocess.STDOUT,
-                        cwd=str(Path(script_path).parent.parent)
+                        cwd=str(Path(script_path).parent.parent),
+                        env=gnina_subprocess_env()
                     )
 
                     with self._lock:
