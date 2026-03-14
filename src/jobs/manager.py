@@ -91,7 +91,13 @@ class JobManager:
                             if value:  # Only add flag if True
                                 cmd.append(f"--{key}")
                         else:
-                            cmd.extend([f"--{key}", str(value)])
+                            str_value = str(value)
+                            # Split space-separated values for nargs='+' args
+                            if ' ' in str_value:
+                                cmd.append(f"--{key}")
+                                cmd.extend(str_value.split())
+                            else:
+                                cmd.extend([f"--{key}", str_value])
 
                 # Set output paths
                 output_file = job_dir / "output.json"

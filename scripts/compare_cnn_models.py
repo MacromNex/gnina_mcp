@@ -423,11 +423,19 @@ def main():
         config = config_overrides
 
     try:
+        output_path = Path(args.output) if args.output else None
+
+        # If output is .json, use a sibling .csv for results and write JSON
+        if output_path and output_path.suffix.lower() == '.json':
+            csv_output = str(output_path.with_suffix('.csv'))
+        else:
+            csv_output = args.output
+
         # Run CNN comparison
         result = run_cnn_comparison(
             receptor_file=args.receptor,
             ligand_file=args.ligand,
-            output_file=args.output,
+            output_file=csv_output,
             models=args.models,
             modes=args.modes,
             iterations=args.iterations,
@@ -452,6 +460,12 @@ def main():
 
         if result['output_file']:
             print(f"\nDetailed results saved to: {result['output_file']}")
+
+        # Write JSON results if requested
+        if output_path and output_path.suffix.lower() == '.json':
+            result.pop('metadata', None)
+            with open(output_path, 'w') as f:
+                json.dump(result, f, indent=2)
 
         return result
 

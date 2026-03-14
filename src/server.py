@@ -247,16 +247,16 @@ def submit_molecular_docking(
         "ligand": ligand_file,
         "num_modes": num_modes,
         "exhaustiveness": exhaustiveness,
-        "cnn_scoring": cnn_scoring
+        "cnn_scoring": "rescore" if cnn_scoring else "none"
     }
 
     # Add optional parameters
     if autobox_ligand:
         args["autobox_ligand"] = autobox_ligand
     if center:
-        args["center"] = ",".join(map(str, center))
+        args["center"] = " ".join(map(str, center))
     if size:
-        args["size"] = ",".join(map(str, size))
+        args["size"] = " ".join(map(str, size))
 
     return job_manager.submit_job(
         script_path=script_path,
@@ -297,12 +297,12 @@ def submit_virtual_screening(
     args = {
         "receptor": receptor_file,
         "top_n": top_n,
-        "affinity_cutoff": affinity_cutoff
+        "max_affinity": affinity_cutoff
     }
 
     # Handle ligand input
     if ligand_files:
-        args["ligand_files"] = ",".join(ligand_files)
+        args["ligands"] = " ".join(ligand_files)
     elif ligand_dir:
         args["ligand_dir"] = ligand_dir
     else:
@@ -357,7 +357,7 @@ def submit_flexible_docking(
     if flexdist_ligand:
         args["flexdist_ligand"] = flexdist_ligand
     if flexres:
-        args["flexres"] = ",".join(flexres)
+        args["flexres"] = " ".join(flexres)
 
     return job_manager.submit_job(
         script_path=script_path,
@@ -400,9 +400,9 @@ def submit_cnn_comparison(
     }
 
     if models:
-        args["models"] = ",".join(models)
+        args["models"] = " ".join(models)
     if modes:
-        args["modes"] = ",".join(modes)
+        args["modes"] = " ".join(modes)
 
     return job_manager.submit_job(
         script_path=script_path,

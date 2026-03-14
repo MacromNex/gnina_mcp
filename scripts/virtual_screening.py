@@ -492,11 +492,19 @@ def main():
         config = config_overrides
 
     try:
+        output_path = Path(args.output) if args.output else None
+
+        # If output is .json, use a sibling .csv for results and write JSON
+        if output_path and output_path.suffix.lower() == '.json':
+            csv_output = str(output_path.with_suffix('.csv'))
+        else:
+            csv_output = args.output
+
         # Run virtual screening
         result = run_virtual_screening(
             receptor_file=args.receptor,
             ligand_files=ligand_files,
-            output_file=args.output,
+            output_file=csv_output,
             autobox_ligand=args.autobox_ligand,
             config=config
         )
@@ -506,6 +514,12 @@ def main():
 
         if result['output_file']:
             print(f"\nDetailed results saved to: {result['output_file']}")
+
+        # Write JSON results if requested
+        if output_path and output_path.suffix.lower() == '.json':
+            result.pop('metadata', None)
+            with open(output_path, 'w') as f:
+                json.dump(result, f, indent=2)
 
         return result
 

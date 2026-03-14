@@ -100,36 +100,54 @@ DEFAULT_CONFIG = {
 # Inlined Utility Functions
 # ==============================================================================
 def parse_docking_output(output_text: str) -> List[Dict[str, Any]]:
-    """Parse gnina docking output to extract pose information."""
+    """Parse gnina docking output to extract pose information.
+
+    Gnina output format (docking mode with CNN rescore):
+        mode |  affinity  |  intramol  |    CNN     |   CNN
+             | (kcal/mol) | (kcal/mol) | pose score | affinity
+        -----+------------+------------+------------+----------
+            1       -6.87       -0.31       0.9342      4.874
+
+    Gnina output format (docking mode without CNN):
+        mode |   affinity | dist from best mode
+             | (kcal/mol) | rmsd l.b.| rmsd u.b.
+        -----+------------+----------+----------
+            1       -6.87      0.000      0.000
+    """
     output = output_text.decode() if isinstance(output_text, bytes) else output_text
     poses = []
 
-    # Extract pose results
-    pose_pattern = r'(\d+)\s+(-?\d+\.?\d*)\s+\d+\.?\d*\s+\d+\.?\d*'
-    matches = re.findall(pose_pattern, output)
-
-    for match in matches:
-        try:
-            pose_num = int(match[0])
-            affinity = float(match[1])
-            poses.append({
-                "pose": pose_num,
-                "affinity": affinity,
-                "rmsd_lb": None,  # Would need more sophisticated parsing
-                "rmsd_ub": None
-            })
-        except (ValueError, IndexError):
-            continue
-
-    # Extract CNN scores if available
-    cnn_pattern = r'CNNaffinity:\s+(\S+)'
-    cnn_matches = re.findall(cnn_pattern, output)
-    for i, cnn_match in enumerate(cnn_matches):
-        if i < len(poses):
+    # Match pose lines: leading whitespace + mode number + numeric columns
+    # This avoids matching progress bar "0%   10   20   30..." lines
+    pose_pattern = r'^\s+(\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(\d+\.\d+)(?:\s+(\d+\.\d+))?'
+    for line in output.splitlines():
+        match = re.match(pose_pattern, line)
+        if match:
             try:
-                poses[i]["cnn_affinity"] = float(cnn_match)
-            except ValueError:
-                poses[i]["cnn_affinity"] = None
+                pose_num = int(match.group(1))
+                affinity = float(match.group(2))
+                col3 = float(match.group(3))
+                col4 = float(match.group(4))
+                col5 = float(match.group(5)) if match.group(5) else None
+
+                pose = {
+                    "pose": pose_num,
+                    "affinity": affinity,
+                }
+
+                if col5 is not None:
+                    # 5-column CNN format: mode, affinity, intramol, cnn_score, cnn_affinity
+                    pose["intramol"] = col3
+                    pose["cnn_score"] = col4
+                    pose["cnn_affinity"] = col5
+                else:
+                    # 4-column Vina format: mode, affinity, rmsd_lb, rmsd_ub
+                    pose["rmsd_lb"] = col3
+                    pose["rmsd_ub"] = col4
+
+                poses.append(pose)
+            except (ValueError, IndexError):
+                continue
 
     return poses
 
@@ -385,11 +403,19 @@ def main():
         config = config_overrides
 
     try:
+        output_path = Path(args.output)
+
+        # If output is .json, use a sibling .sdf for gnina and write JSON results
+        if output_path.suffix.lower() == '.json':
+            sdf_output = str(output_path.with_suffix('.sdf'))
+        else:
+            sdf_output = args.output
+
         # Run docking
         result = run_molecular_docking(
             receptor_file=args.receptor,
             ligand_file=args.ligand,
-            output_file=args.output,
+            output_file=sdf_output,
             autobox_ligand=args.autobox_ligand,
             center=args.center,
             size=args.size,
@@ -420,6 +446,15 @@ def main():
                     print(f"Best affinity: {analysis['best_affinity']:.3f} kcal/mol")
                     print(f"Mean affinity: {analysis['mean_affinity']:.3f} kcal/mol")
                     print(f"Affinity range: {analysis['affinity_range']:.3f} kcal/mol")
+
+            # Write JSON results if requested
+            if output_path.suffix.lower() == '.json':
+                # Remove non-serializable config from metadata
+                result['metadata'].pop('raw_output', None)
+                result['metadata'].pop('config', None)
+                with open(output_path, 'w') as f:
+                    json.dump(result, f, indent=2)
+                print(f"JSON results saved to: {output_path}")
         else:
             print("No poses were generated successfully")
             sys.exit(1)

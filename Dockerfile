@@ -62,7 +62,8 @@ WORKDIR /app
 
 # Install Python dependencies first (better layer caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir "numpy<2" rdkit-pypi
 
 # Copy application code
 COPY src/ src/
@@ -71,8 +72,8 @@ COPY configs/ configs/
 COPY examples/ examples/
 COPY mock_gnina.py .
 
-# Create directories for job output
-RUN mkdir -p jobs results
+# Create directories for job output (world-writable for --user UID:GID)
+RUN mkdir -p jobs results && chmod 777 jobs results
 
 # Set environment so gnina is always found
 ENV PATH="/usr/local/bin:${PATH}"
@@ -82,6 +83,7 @@ ENV PYTHONUNBUFFERED=1
 # Health check: verify imports work
 RUN python -c "from fastmcp import FastMCP; print('FastMCP OK')" \
     && python -c "import pandas, numpy, loguru; print('Dependencies OK')" \
+    && python -c "from rdkit import Chem; print('RDKit OK')" \
     && python -c "import sys; sys.path.insert(0,'src'); sys.path.insert(0,'scripts'); from server import mcp; print(f'MCP server OK: {mcp.name}')"
 
 # Default: run MCP server via stdio

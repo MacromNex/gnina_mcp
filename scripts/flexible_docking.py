@@ -262,10 +262,18 @@ def main():
             config = json.load(f)
 
     try:
+        output_path = Path(args.output)
+
+        # If output is .json, use a sibling .sdf for gnina and write JSON results
+        if output_path.suffix.lower() == '.json':
+            sdf_output = str(output_path.with_suffix('.sdf'))
+        else:
+            sdf_output = args.output
+
         result = run_flexible_docking(
             receptor_file=args.receptor,
             ligand_file=args.ligand,
-            output_file=args.output,
+            output_file=sdf_output,
             flexdist=args.flexdist,
             flexdist_ligand=args.flexdist_ligand,
             flexres=args.flexres,
@@ -289,6 +297,12 @@ def main():
                 print(f"Improvement: {result['analysis']['improvement']:.3f} kcal/mol")
 
         print(f"\nOutput saved to: {result['output_file']}")
+
+        # Write JSON results if requested
+        if output_path.suffix.lower() == '.json':
+            result.pop('metadata', None)
+            with open(output_path, 'w') as f:
+                json.dump(result, f, indent=2)
 
         return result
 
